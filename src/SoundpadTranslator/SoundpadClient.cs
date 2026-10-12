@@ -77,7 +77,10 @@ sealed class SoundpadClient
             .Select(e =>
             {
                 var url = (string?)e.Attribute("url") ?? "";
-                var title = (string?)e.Attribute("title");
+                // "tag" is the name shown in Soundpad's list (custom rename or "artist - title").
+                var title = (string?)e.Attribute("tag");
+                if (string.IsNullOrWhiteSpace(title))
+                    title = (string?)e.Attribute("title");
                 if (string.IsNullOrWhiteSpace(title))
                     title = Path.GetFileNameWithoutExtension(url);
                 return new SoundInfo((int?)e.Attribute("index") ?? 0, title, url);
