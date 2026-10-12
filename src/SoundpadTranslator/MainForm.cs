@@ -37,6 +37,8 @@ sealed class MainForm : Form
     readonly Button addButton = new() { AutoSize = true };
     readonly Button editButton = new() { AutoSize = true };
     readonly Button removeButton = new() { AutoSize = true };
+    readonly Button exportButton = new() { AutoSize = true };
+    readonly Button importButton = new() { AutoSize = true };
     readonly CheckBox enabledBox = new() { AutoSize = true, Margin = new Padding(12, 6, 3, 3) };
     readonly CheckBox autostartBox = new() { AutoSize = true, Margin = new Padding(12, 6, 3, 3) };
     readonly Label languageLabel = new() { AutoSize = true, Margin = new Padding(12, 8, 3, 3) };
@@ -114,7 +116,7 @@ sealed class MainForm : Form
         soundpadLabel.Margin = new Padding(6, 8, 3, 3);
 
         var bindingRow = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, Padding = new Padding(6) };
-        bindingRow.Controls.AddRange([addButton, editButton, removeButton, enabledBox, autostartBox, languageLabel, languageBox]);
+        bindingRow.Controls.AddRange([addButton, editButton, removeButton, exportButton, importButton, enabledBox, autostartBox, languageLabel, languageBox]);
 
         Controls.Add(list);
         Controls.Add(bindingRow);
@@ -128,6 +130,8 @@ sealed class MainForm : Form
         addButton.Click += (_, _) => ToggleCapture();
         editButton.Click += (_, _) => EditSelected();
         removeButton.Click += (_, _) => RemoveSelected();
+        exportButton.Click += (_, _) => ExportBindings();
+        importButton.Click += (_, _) => ImportBindings();
         list.DoubleClick += (_, _) => EditSelected();
         list.KeyDown += (_, e) => { if (e.KeyCode == Keys.Delete) RemoveSelected(); };
         enabledBox.CheckedChanged += (_, _) =>
@@ -178,6 +182,8 @@ sealed class MainForm : Form
         addButton.Text = capturingKey ? T("Zrušit", "Cancel") : T("Přidat klávesu...", "Add key...");
         editButton.Text = T("Změnit zvuk...", "Change sound...");
         removeButton.Text = T("Odebrat", "Remove");
+        exportButton.Text = T("Exportovat...", "Export...");
+        importButton.Text = T("Importovat...", "Import...");
         enabledBox.Text = trayToggleItem.Text = T("Soundboard zapnutý", "Soundboard on");
         autostartBox.Text = T("Spouštět s Windows", "Start with Windows");
         languageLabel.Text = T("Jazyk:", "Language:");
@@ -316,6 +322,76 @@ sealed class MainForm : Form
         config.Bindings.Remove(binding);
         config.Save();
         RebuildBindings();
+    }
+
+    static string BindingsFileFilter => "JSON (*.json)|*.json|" + T("Všechny soubory", "All files") + " (*.*)|*.*";
+
+    void ExportBindings()
+    {
+        if (config.Bindings.Count == 0)
+        {
+            MessageBox.Show(this, T("Nejsou žádné klávesy k exportu.", "There are no keys to export."), Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        using var dialog = new SaveFileDialog
+        {
+            Filter = BindingsFileFilter,
+            FileName = "soundboard.json",
+            Title = T("Exportovat klávesy", "Export keys"),
+        };
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+            return;
+        try
+        {
+            config.ExportBindings(dialog.FileName);
+            SetStatus(T($"Exportováno {config.Bindings.Count} kláves do {dialog.FileName}.", $"Exported {config.Bindings.Count} keys to {dialog.FileName}."));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            MessageBox.Show(this, T("Export se nepovedl: ", "Export failed: ") + ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    void ImportBindings()
+    {
+        using var dialog = new OpenFileDialog
+        {
+            Filter = BindingsFileFilter,
+            Title = T("Importovat klávesy", "Import keys"),
+        };
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+            return;
+
+        List<Binding> imported;
+        try
+        {
+            imported = AppConfig.ImportBindings(dialog.FileName);
+        }
+        catch (Exception ex) when (ex is System.Text.Json.JsonException or IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            MessageBox.Show(this, T("Soubor nejde načíst: ", "Could not read the file: ") + ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
+        }
+
+        var replace = DialogResult.Yes;
+        if (config.Bindings.Count > 0)
+        {
+            replace = MessageBox.Show(this,
+                T($"Soubor obsahuje {imported.Count} kláves.\n\nAno = nahradit všechny současné klávesy\nNe = přidat ke stávajícím (stejné klávesy se přepíšou)",
+                    $"The file contains {imported.Count} keys.\n\nYes = replace all current keys\nNo = merge with current keys (matching keys are overwritten)"),
+                T("Importovat klávesy", "Import keys"), MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+            if (replace == DialogResult.Cancel)
+                return;
+        }
+
+        if (replace == DialogResult.Yes)
+            config.Bindings.Clear();
+        var importedKeys = imported.Select(b => b.Key).ToHashSet();
+        config.Bindings.RemoveAll(b => importedKeys.Contains(b.Key));
+        config.Bindings.AddRange(imported);
+        config.Save();
+        RebuildBindings();
+        SetStatus(T($"Importováno {imported.Count} kláves.", $"Imported {imported.Count} keys."));
     }
 
     void RebuildBindings(Binding? select = null)

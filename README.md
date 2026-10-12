@@ -29,6 +29,9 @@ Při prvním spuštění se aplikace zeptá na jazyk (čeština / English). Pozd
 Nastavení se ukládá do `%APPDATA%\SoundpadTranslator\config.json`.
 Zvuky se pamatují podle cesty k souboru, takže přeuspořádání seznamu v Soundpadu přiřazení nerozbije.
 
+Přiřazení kláves můžeš uložit do souboru tlačítkem **Exportovat...** a načíst tlačítkem **Importovat...**
+(nahradit současné, nebo přidat ke stávajícím). Volba klávesnice se neexportuje, protože platí jen pro daný počítač.
+
 ## Poznámky
 
 - Interception je ovladač na úrovni jádra. Anticheaty jako Vanguard (Valorant) nebo FACEIT ho můžou blokovat nebo hlásit.

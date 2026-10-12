@@ -80,4 +80,23 @@ sealed class AppConfig
         File.WriteAllText(temp, JsonSerializer.Serialize(this, JsonOptions));
         File.Move(temp, FilePath, overwrite: true);
     }
+
+    /// <summary>Writes just the bindings; the keyboard and other settings are specific to this PC.</summary>
+    public void ExportBindings(string path) =>
+        File.WriteAllText(path, JsonSerializer.Serialize(new BindingsFile { Bindings = Bindings }, JsonOptions));
+
+    /// <summary>Reads bindings from an export or a whole config.json. Throws JsonException or IOException.</summary>
+    public static List<Binding> ImportBindings(string path)
+    {
+        var file = JsonSerializer.Deserialize<BindingsFile>(File.ReadAllText(path), JsonOptions);
+        if (file?.Bindings is not { } bindings)
+            throw new JsonException("No bindings found.");
+        // One binding per key; the last one wins, like when adding keys in the app.
+        return bindings.GroupBy(b => b.Key).Select(g => g.Last()).ToList();
+    }
+
+    sealed class BindingsFile
+    {
+        public List<Binding>? Bindings { get; set; }
+    }
 }
