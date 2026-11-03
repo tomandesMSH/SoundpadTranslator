@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using MacroKeyboard;
 
 namespace SoundpadTranslator;
 
@@ -32,9 +33,9 @@ sealed partial class KeyboardPickerForm : Form
     readonly Button retryButton = new() { Text = T("Zkusit znovu", "Try again"), AutoSize = true, Enabled = false };
     readonly Button cancelButton = new() { Text = T("Zrušit", "Cancel"), AutoSize = true };
 
-    public SoundboardTarget? Result { get; private set; }
+    public MacroKeyboardTarget? Result { get; private set; }
 
-    public KeyboardPickerForm(KeyboardInterceptor interceptor, SoundboardTarget? current)
+    public KeyboardPickerForm(KeyboardInterceptor interceptor, MacroKeyboardTarget? current)
     {
         this.interceptor = interceptor;
         Text = T("Výběr soundboard klávesnice", "Choose soundboard keyboard");
@@ -77,7 +78,7 @@ sealed partial class KeyboardPickerForm : Form
     }
 
     /// <summary>Runs on the interception thread.</summary>
-    void OnLearned(SoundboardTarget target) => BeginInvoke(() =>
+    void OnLearned(MacroKeyboardTarget target) => BeginInvoke(() =>
     {
         Result = target;
         prompt.Text = T("Klávesnice nalezena", "Keyboard found");

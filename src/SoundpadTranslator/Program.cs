@@ -1,3 +1,5 @@
+using MacroKeyboard;
+
 namespace SoundpadTranslator;
 
 static class Program

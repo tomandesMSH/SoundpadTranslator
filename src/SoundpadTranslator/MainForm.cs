@@ -1,5 +1,6 @@
 using System.Threading.Channels;
 using Microsoft.Win32;
+using MacroKeyboard;
 
 namespace SoundpadTranslator;
 
@@ -78,7 +79,7 @@ sealed class MainForm : Form
 
         interceptor.Target = config.Target;
         interceptor.Enabled = config.Enabled;
-        interceptor.SoundboardKeyDown += OnSoundboardKey;
+        interceptor.MacroKeyDown += OnSoundboardKey;
         interceptor.DeviceMoved += t => BeginInvoke(() => { config.KeyboardDevice = t.Device; config.Save(); });
 
         enabledBox.Checked = config.Enabled;

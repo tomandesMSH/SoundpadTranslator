@@ -14,8 +14,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="native\interception.dll" Link="interception.dll" CopyToOutputDirectory="PreserveNewest" />
+    <!-- interception.dll itself now comes from the MacroKeyboard package (runtimes/win-x64/native). -->
     <None Include="..\..\tools\install-interception.exe" Link="install-interception.exe" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MacroKeyboard" Version="1.0.1" />
   </ItemGroup>
 
 </Project>

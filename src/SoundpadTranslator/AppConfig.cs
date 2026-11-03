@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using MacroKeyboard;
 
 namespace SoundpadTranslator;
 
@@ -57,7 +58,7 @@ sealed class AppConfig
     public List<Binding> Bindings { get; set; } = [];
 
     [JsonIgnore]
-    public SoundboardTarget? Target => KeyboardHardwareId == null ? null : new SoundboardTarget(KeyboardHardwareId, KeyboardDevice);
+    public MacroKeyboardTarget? Target => KeyboardHardwareId == null ? null : new MacroKeyboardTarget(KeyboardHardwareId, KeyboardDevice);
 
     public static AppConfig Load()
     {
